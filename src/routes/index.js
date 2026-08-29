@@ -465,6 +465,7 @@ router.get(
                 .maybeSingle();
 
             if (error) {
+
                 console.error(
                     `[SUPABASE] Erro ao consultar cargos da guild ${guildId}:`,
                     error.message
@@ -478,6 +479,7 @@ router.get(
             }
 
             if (!data) {
+
                 return res.status(404).json({
                     success: false,
                     message:
@@ -492,7 +494,10 @@ router.get(
 
             res.json({
                 success: true,
-                count: roles.length,
+
+                count:
+                    roles.length,
+
                 roles
             });
 
