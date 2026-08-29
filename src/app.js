@@ -36,6 +36,50 @@ app.get("/", (req, res) => {
 // API V1
 app.use("/api/v1", routes);
 
+
+// TEMPORÁRIO — TESTE SUPABASE
+app.get("/api/v1/internal/test-supabase", async (req, res) => {
+    try {
+        const supabase = require("./database/supabase");
+
+        if (!supabase) {
+            return res.status(500).json({
+                success: false,
+                message: "Supabase não foi inicializado."
+            });
+        }
+
+        const { data, error } = await supabase
+            .from("guild_settings")
+            .select("guild_id")
+            .limit(1);
+
+        if (error) {
+            console.error("[SUPABASE] Erro:", error);
+
+            return res.status(500).json({
+                success: false,
+                message: "Erro ao consultar o Supabase.",
+                error: error.message
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: "Supabase conectado com sucesso!",
+            records: data.length
+        });
+
+    } catch (error) {
+        console.error("[SUPABASE] Erro interno:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 // 404
 app.use((req, res) => {
     res.status(404).json({
