@@ -1,10 +1,15 @@
 const express = require("express");
+
 const router = express.Router();
 
 const {
     getGuildSettings,
     updateWelcome
 } = require("../services/guildSettingsService");
+
+// ========================================
+// VALIDAR ID DA GUILD
+// ========================================
 
 function validateGuildId(req, res, next) {
     const { guildId } = req.params;
@@ -19,7 +24,10 @@ function validateGuildId(req, res, next) {
     next();
 }
 
-// GET configurações gerais
+// ========================================
+// GET CONFIGURAÇÕES GERAIS
+// ========================================
+
 router.get(
     "/:guildId/settings",
     validateGuildId,
@@ -39,7 +47,10 @@ router.get(
     }
 );
 
-// GET configuração de boas-vindas
+// ========================================
+// GET BOAS-VINDAS
+// ========================================
+
 router.get(
     "/:guildId/settings/welcome",
     validateGuildId,
@@ -51,10 +62,19 @@ router.get(
 
             res.json({
                 success: true,
+
                 welcome: {
-                    enabled: settings.welcome_enabled,
-                    channelId: settings.welcome_channel_id,
-                    message: settings.welcome_message
+                    enabled:
+                        settings.welcome_enabled,
+
+                    channelId:
+                        settings.welcome_channel_id,
+
+                    message:
+                        settings.welcome_message,
+
+                    mode:
+                        settings.welcome_mode || "normal"
                 }
             });
         } catch (error) {
@@ -63,7 +83,10 @@ router.get(
     }
 );
 
-// PUT configuração de boas-vindas
+// ========================================
+// PUT BOAS-VINDAS
+// ========================================
+
 router.put(
     "/:guildId/settings/welcome",
     validateGuildId,
@@ -72,8 +95,29 @@ router.put(
             const {
                 enabled,
                 channelId,
-                message
+                message,
+                mode
             } = req.body;
+
+            // -------------------------------
+            // VALIDAR MODO
+            // -------------------------------
+
+            if (
+                mode !== undefined &&
+                mode !== "normal" &&
+                mode !== "advanced"
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Modo inválido. Use normal ou advanced."
+                });
+            }
+
+            // -------------------------------
+            // VALIDAR MENSAGEM
+            // -------------------------------
 
             if (
                 message !== undefined &&
@@ -81,42 +125,168 @@ router.put(
             ) {
                 return res.status(400).json({
                     success: false,
-                    message: "A mensagem deve ser um texto."
+                    message:
+                        "A mensagem deve ser um texto."
                 });
             }
 
             if (
                 message !== undefined &&
-                message.length > 1000
+                message.length > 4000
             ) {
                 return res.status(400).json({
                     success: false,
-                    message: "A mensagem não pode ter mais de 1000 caracteres."
+                    message:
+                        "A mensagem não pode ter mais de 4000 caracteres."
                 });
             }
+
+            // -------------------------------
+            // ATUALIZAR
+            // -------------------------------
 
             const settings = await updateWelcome(
                 req.params.guildId,
                 {
                     enabled,
                     channelId,
-                    message
+                    message,
+                    mode
                 }
             );
 
             res.json({
                 success: true,
-                message: "Configuração de boas-vindas salva.",
+
+                message:
+                    "Configuração de boas-vindas salva.",
+
                 welcome: {
-                    enabled: settings.welcome_enabled,
-                    channelId: settings.welcome_channel_id,
-                    message: settings.welcome_message
+                    enabled:
+                        settings.welcome_enabled,
+
+                    channelId:
+                        settings.welcome_channel_id,
+
+                    message:
+                        settings.welcome_message,
+
+                    mode:
+                        settings.welcome_mode
                 }
             });
+
         } catch (error) {
             next(error);
         }
     }
 );
+
+// ========================================
+// TESTAR MENSAGEM DE BOAS-VINDAS
+// ========================================
+
+router.post(
+    "/:guildId/settings/welcome/test",
+    validateGuildId,
+    async (req, res, next) => {
+        try {
+            const {
+                channelId,
+                message,
+                mode
+            } = req.body;
+
+            // -------------------------------
+            // VALIDAR CANAL
+            // -------------------------------
+
+            if (
+                !channelId ||
+                !/^\d{17,20}$/.test(String(channelId))
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "ID de canal inválido."
+                });
+            }
+
+            // -------------------------------
+            // VALIDAR MENSAGEM
+            // -------------------------------
+
+            if (
+                message !== undefined &&
+                typeof message !== "string"
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "A mensagem deve ser um texto."
+                });
+            }
+
+            if (
+                message !== undefined &&
+                message.length > 4000
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "A mensagem não pode ter mais de 4000 caracteres."
+                });
+            }
+
+            // -------------------------------
+            // VALIDAR MODO
+            // -------------------------------
+
+            if (
+                mode !== undefined &&
+                mode !== "normal" &&
+                mode !== "advanced"
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Modo inválido. Use normal ou advanced."
+                });
+            }
+
+            // -------------------------------
+            // RESPOSTA
+            // -------------------------------
+
+            res.json({
+                success: true,
+
+                message:
+                    "Solicitação de teste recebida.",
+
+                test: {
+                    guildId:
+                        req.params.guildId,
+
+                    channelId:
+                        String(channelId),
+
+                    mode:
+                        mode || "normal",
+
+                    content:
+                        message ||
+                        "Bem-vindo(a), {user}, ao {server}!"
+                }
+            });
+
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+// ========================================
+// EXPORT
+// ========================================
 
 module.exports = router;
