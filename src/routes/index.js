@@ -11,7 +11,7 @@ router.get("/health", (req, res) => {
         success: true,
         status: "online",
         service: "Lore API",
-        version: "2.1.0",
+        version: "2.2.0",
         timestamp: new Date().toISOString()
     });
 });
@@ -24,7 +24,7 @@ router.get("/", (req, res) => {
     res.json({
         success: true,
         service: "Lore API",
-        version: "2.1.0",
+        version: "2.2.0",
         status: "online"
     });
 });
@@ -34,7 +34,6 @@ router.get("/", (req, res) => {
 // ========================================
 
 router.get("/bot", (req, res) => {
-
     const bot = req.app.locals.botStatus;
 
     res.json({
@@ -44,10 +43,29 @@ router.get("/bot", (req, res) => {
             name: "Lore",
             id: null,
             servers: 0,
-            commands: 0
+            commands: 0,
+            guilds: [],
+            updatedAt: null
         }
     });
+});
 
+// ========================================
+// SERVIDORES
+// ========================================
+
+router.get("/servers", (req, res) => {
+    const bot = req.app.locals.botStatus;
+
+    const guilds = Array.isArray(bot?.guilds)
+        ? bot.guilds
+        : [];
+
+    res.json({
+        success: true,
+        count: guilds.length,
+        servers: guilds
+    });
 });
 
 // ========================================
@@ -55,7 +73,6 @@ router.get("/bot", (req, res) => {
 // ========================================
 
 router.get("/commands", (req, res) => {
-
     res.json({
         success: true,
         count: 3,
@@ -77,46 +94,38 @@ router.get("/commands", (req, res) => {
             }
         ]
     });
-
 });
 
 // ========================================
-// STATUS INTERNO DA BOT
+// STATUS INTERNO DO BOT
 // ========================================
 
 router.post("/internal/bot/status", (req, res) => {
 
     const authHeader = req.headers.authorization;
-
     const expectedToken = process.env.API_TOKEN;
 
     if (!expectedToken) {
-
         return res.status(500).json({
             success: false,
             message: "API_TOKEN não configurado na API."
         });
-
     }
 
     if (!authHeader) {
-
         return res.status(401).json({
             success: false,
             message: "Token de autenticação ausente."
         });
-
     }
 
     const token = authHeader.replace("Bearer ", "");
 
     if (token !== expectedToken) {
-
         return res.status(403).json({
             success: false,
             message: "Token de autenticação inválido."
         });
-
     }
 
     const {
@@ -124,27 +133,47 @@ router.post("/internal/bot/status", (req, res) => {
         name,
         id,
         servers,
-        commands
+        commands,
+        guilds
     } = req.body;
 
     req.app.locals.botStatus = {
 
         online: Boolean(online),
 
-        name: name || "Lore",
+        name:
+            name ||
+            "Lore",
 
-        id: id || null,
+        id:
+            id ||
+            null,
 
-        servers: Number(servers) || 0,
+        servers:
+            Number(servers) ||
+            0,
 
-        commands: Number(commands) || 0,
+        commands:
+            Number(commands) ||
+            0,
 
-        updatedAt: new Date().toISOString()
+        guilds:
+            Array.isArray(guilds)
+                ? guilds
+                : [],
 
+        updatedAt:
+            new Date().toISOString()
     };
 
     console.log(
-        `[BOT] Status atualizado: ${online ? "ONLINE" : "OFFLINE"}`
+        `[BOT] Status atualizado: ${
+            online ? "ONLINE" : "OFFLINE"
+        } | Servidores: ${
+            Array.isArray(guilds)
+                ? guilds.length
+                : 0
+        }`
     );
 
     res.json({
@@ -152,7 +181,6 @@ router.post("/internal/bot/status", (req, res) => {
         message: "Status da Lore atualizado.",
         bot: req.app.locals.botStatus
     });
-
 });
 
 module.exports = router;
