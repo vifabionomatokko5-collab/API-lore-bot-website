@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 
 const routes = require("./routes");
+const guildSettingsRoutes = require("./routes/guildSettingsRoutes");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -35,6 +36,7 @@ app.get("/", (req, res) => {
 
 // API V1
 app.use("/api/v1", routes);
+app.use("/api/v1/guilds", guildSettingsRoutes);
 
 
 // TEMPORÁRIO — TESTE SUPABASE
