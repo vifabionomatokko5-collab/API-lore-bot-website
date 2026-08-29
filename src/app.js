@@ -49,3 +49,45 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 module.exports = app;
+
+app.get("/api/v1/internal/test-supabase", async (req, res) => {
+    try {
+        const supabase = require("./database/supabase");
+
+        if (!supabase) {
+            return res.status(500).json({
+                success: false,
+                message: "Supabase não foi inicializado."
+            });
+        }
+
+        const { data, error } = await supabase
+            .from("guild_settings")
+            .select("guild_id")
+            .limit(1);
+
+        if (error) {
+            console.error("[SUPABASE] Erro:", error);
+
+            return res.status(500).json({
+                success: false,
+                message: "Erro ao consultar o Supabase.",
+                error: error.message
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Supabase conectado com sucesso!",
+            records: data.length
+        });
+
+    } catch (error) {
+        console.error("[SUPABASE] Erro interno:", error);
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
