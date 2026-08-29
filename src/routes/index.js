@@ -1,4 +1,5 @@
 const express = require("express");
+const supabase = require("../database/supabase");
 
 const router = express.Router();
 
@@ -249,7 +250,7 @@ router.post(
 
 router.post(
     "/internal/bot/resources",
-    (req, res) => {
+    async (req, res) => {
 
         if (!validateInternalToken(req, res)) {
             return;
@@ -262,9 +263,7 @@ router.post(
         if (!Array.isArray(guilds)) {
 
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "O campo guilds precisa ser um array."
             });
@@ -281,8 +280,7 @@ router.post(
             const guildId =
                 String(guild.guild.id);
 
-            resources[guildId] = {
-
+            const resource = {
                 guild: {
                     id: guildId,
 
@@ -313,19 +311,49 @@ router.post(
                 updatedAt:
                     new Date().toISOString()
             };
+
+            resources[guildId] = resource;
+
+            const { error } = await supabase
+                .from("guild_resources")
+                .upsert({
+                    guild_id: guildId,
+                    guild_name: resource.guild.name,
+                    guild_icon: resource.guild.icon,
+                    member_count: resource.guild.memberCount,
+                    channels: resource.channels,
+                    roles: resource.roles,
+                    updated_at: resource.updatedAt
+                }, {
+                    onConflict: "guild_id"
+                });
+
+            if (error) {
+                console.error(
+                    `[SUPABASE] Erro ao salvar recursos da guild ${guildId}:`,
+                    error.message
+                );
+
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "Erro ao salvar recursos no banco de dados."
+                });
+            }
         }
 
+        // Mantém o cache em memória para compatibilidade
+        // com as rotas antigas.
         req.app.locals.guildResources =
             resources;
 
         console.log(
-            `[BOT] Recursos atualizados: ${
+            `[BOT] Recursos atualizados no Supabase: ${
                 Object.keys(resources).length
             } servidor(es).`
         );
 
         res.json({
-
             success: true,
 
             message:
@@ -334,7 +362,6 @@ router.post(
             count:
                 Object.keys(resources).length
         });
-
     }
 );
 
@@ -424,39 +451,64 @@ router.get(
 
 router.get(
     "/guilds/:guildId/roles",
-    (req, res) => {
+    async (req, res) => {
 
         const guildId =
             String(req.params.guildId);
 
-        const resources =
-            req.app.locals.guildResources || {};
+        try {
 
-        const guild =
-            resources[guildId];
+            const { data, error } = await supabase
+                .from("guild_resources")
+                .select("roles")
+                .eq("guild_id", guildId)
+                .maybeSingle();
 
-        if (!guild) {
+            if (error) {
+                console.error(
+                    `[SUPABASE] Erro ao consultar cargos da guild ${guildId}:`,
+                    error.message
+                );
 
-            return res.status(404).json({
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "Erro ao consultar os cargos do servidor."
+                });
+            }
 
+            if (!data) {
+                return res.status(404).json({
+                    success: false,
+                    message:
+                        "Servidor não encontrado ou ainda não sincronizado."
+                });
+            }
+
+            const roles =
+                Array.isArray(data.roles)
+                    ? data.roles
+                    : [];
+
+            res.json({
+                success: true,
+                count: roles.length,
+                roles
+            });
+
+        } catch (error) {
+
+            console.error(
+                `[ROLES] Erro inesperado para a guild ${guildId}:`,
+                error
+            );
+
+            res.status(500).json({
                 success: false,
-
                 message:
-                    "Servidor não encontrado ou ainda não sincronizado."
+                    "Erro interno ao consultar os cargos."
             });
         }
-
-        res.json({
-
-            success: true,
-
-            count:
-                guild.roles.length,
-
-            roles:
-                guild.roles
-        });
-
     }
 );
 
