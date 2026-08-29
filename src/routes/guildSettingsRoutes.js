@@ -3,8 +3,7 @@ const router = express.Router();
 
 const {
     getGuildSettings,
-    updateWelcome,
-    updateAutorole
+    updateWelcome
 } = require("../services/guildSettingsService");
 
 function validateGuildId(req, res, next) {
@@ -26,10 +25,9 @@ router.get(
     validateGuildId,
     async (req, res, next) => {
         try {
-            const settings =
-                await getGuildSettings(
-                    req.params.guildId
-                );
+            const settings = await getGuildSettings(
+                req.params.guildId
+            );
 
             res.json({
                 success: true,
@@ -41,28 +39,22 @@ router.get(
     }
 );
 
-// GET configurações de boas-vindas
+// GET configuração de boas-vindas
 router.get(
     "/:guildId/settings/welcome",
     validateGuildId,
     async (req, res, next) => {
         try {
-            const settings =
-                await getGuildSettings(
-                    req.params.guildId
-                );
+            const settings = await getGuildSettings(
+                req.params.guildId
+            );
 
             res.json({
                 success: true,
                 welcome: {
-                    enabled:
-                        settings.welcome_enabled,
-
-                    channelId:
-                        settings.welcome_channel_id,
-
-                    message:
-                        settings.welcome_message
+                    enabled: settings.welcome_enabled,
+                    channelId: settings.welcome_channel_id,
+                    message: settings.welcome_message
                 }
             });
         } catch (error) {
@@ -71,74 +63,55 @@ router.get(
     }
 );
 
-// PUT configurações de boas-vindas
+// PUT configuração de boas-vindas
 router.put(
     "/:guildId/settings/welcome",
     validateGuildId,
     async (req, res, next) => {
         try {
-            const settings =
-                await updateWelcome(
-                    req.params.guildId,
-                    req.body || {}
-                );
+            const {
+                enabled,
+                channelId,
+                message
+            } = req.body;
 
-            res.json({
-                success: true,
-                message:
-                    "Configuração de boas-vindas salva.",
-                settings
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-);
+            if (
+                message !== undefined &&
+                typeof message !== "string"
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "A mensagem deve ser um texto."
+                });
+            }
 
-// GET AutoRole
-router.get(
-    "/:guildId/settings/autorole",
-    validateGuildId,
-    async (req, res, next) => {
-        try {
-            const settings =
-                await getGuildSettings(
-                    req.params.guildId
-                );
+            if (
+                message !== undefined &&
+                message.length > 1000
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "A mensagem não pode ter mais de 1000 caracteres."
+                });
+            }
 
-            res.json({
-                success: true,
-                autorole: {
-                    enabled:
-                        settings.autorole_enabled,
-
-                    roleId:
-                        settings.autorole_role_id
+            const settings = await updateWelcome(
+                req.params.guildId,
+                {
+                    enabled,
+                    channelId,
+                    message
                 }
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-);
-
-// PUT AutoRole
-router.put(
-    "/:guildId/settings/autorole",
-    validateGuildId,
-    async (req, res, next) => {
-        try {
-            const settings =
-                await updateAutorole(
-                    req.params.guildId,
-                    req.body || {}
-                );
+            );
 
             res.json({
                 success: true,
-                message:
-                    "Configuração de AutoRole salva.",
-                settings
+                message: "Configuração de boas-vindas salva.",
+                welcome: {
+                    enabled: settings.welcome_enabled,
+                    channelId: settings.welcome_channel_id,
+                    message: settings.welcome_message
+                }
             });
         } catch (error) {
             next(error);
