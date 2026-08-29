@@ -4,7 +4,8 @@ const router = express.Router();
 
 const {
     getGuildSettings,
-    updateWelcome
+    updateWelcome,
+    updateAutorole
 } = require("../services/guildSettingsService");
 
 // ========================================
@@ -176,6 +177,129 @@ router.put(
                 }
             });
 
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+
+
+// ========================================
+// GET AUTOROLE
+// ========================================
+
+router.get(
+    "/:guildId/settings/autorole",
+    validateGuildId,
+    async (req, res, next) => {
+        try {
+            const settings = await getGuildSettings(
+                req.params.guildId
+            );
+
+            res.json({
+                success: true,
+                autorole: {
+                    enabled:
+                        Boolean(settings.autorole_enabled),
+
+                    roleIds:
+                        Array.isArray(settings.autorole_role_ids)
+                            ? settings.autorole_role_ids
+                            : []
+                }
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+// ========================================
+// PUT AUTOROLE
+// ========================================
+
+router.put(
+    "/:guildId/settings/autorole",
+    validateGuildId,
+    async (req, res, next) => {
+        try {
+            const {
+                enabled,
+                roleIds
+            } = req.body;
+
+            if (
+                enabled !== undefined &&
+                typeof enabled !== "boolean"
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "O campo enabled deve ser booleano."
+                });
+            }
+
+            if (
+                roleIds !== undefined &&
+                !Array.isArray(roleIds)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "roleIds deve ser uma lista de cargos."
+                });
+            }
+
+            const normalizedRoleIds = Array.isArray(roleIds)
+                ? roleIds.map(id => String(id))
+                : [];
+
+            if (
+                normalizedRoleIds.some(
+                    id => !/^\d{17,20}$/.test(id)
+                )
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Um ou mais IDs de cargos são inválidos."
+                });
+            }
+
+            if (normalizedRoleIds.length > 10) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Você pode selecionar no máximo 10 cargos."
+                });
+            }
+
+            const settings = await updateAutorole(
+                req.params.guildId,
+                {
+                    enabled,
+                    roleIds: normalizedRoleIds
+                }
+            );
+
+            res.json({
+                success: true,
+
+                message:
+                    "Configuração de AutoRole salva.",
+
+                autorole: {
+                    enabled:
+                        Boolean(settings.autorole_enabled),
+
+                    roleIds:
+                        Array.isArray(settings.autorole_role_ids)
+                            ? settings.autorole_role_ids
+                            : []
+                }
+            });
         } catch (error) {
             next(error);
         }
