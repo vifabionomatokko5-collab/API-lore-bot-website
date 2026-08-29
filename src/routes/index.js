@@ -472,6 +472,20 @@ router.use(
     guildSettingsRoutes
 );
 
+
+/*
+ * ========================================
+ * SISTEMA DE LURAS
+ * ========================================
+ */
+
+const lurasRoutes = require("./lurasRoutes");
+
+router.use(
+    "/luras",
+    lurasRoutes
+);
+
 // ========================================
 // EXPORT
 // ========================================
