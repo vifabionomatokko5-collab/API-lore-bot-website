@@ -5,7 +5,8 @@ const router = express.Router();
 const {
     getGuildSettings,
     updateWelcome,
-    updateAutorole
+    updateAutorole,
+    updateLeave
 } = require("../services/guildSettingsService");
 
 // ========================================
@@ -412,5 +413,151 @@ router.post(
 // ========================================
 // EXPORT
 // ========================================
+
+
+// ========================================
+// GET MENSAGEM DE SAÍDA
+// ========================================
+
+router.get(
+    "/:guildId/settings/leave",
+    validateGuildId,
+    async (req, res, next) => {
+        try {
+            const settings =
+                await getGuildSettings(
+                    req.params.guildId
+                );
+
+            res.json({
+                success: true,
+
+                leave: {
+                    enabled:
+                        Boolean(
+                            settings.leave_enabled
+                        ),
+
+                    channelId:
+                        settings.leave_channel_id,
+
+                    message:
+                        settings.leave_message ||
+                        "Até mais, {user}! 👋",
+
+                    mode:
+                        settings.leave_mode ||
+                        "normal"
+                }
+            });
+
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+// ========================================
+// PUT MENSAGEM DE SAÍDA
+// ========================================
+
+router.put(
+    "/:guildId/settings/leave",
+    validateGuildId,
+    async (req, res, next) => {
+        try {
+
+            const {
+                enabled,
+                channelId,
+                message,
+                mode
+            } = req.body;
+
+            // --------------------------------
+            // VALIDAR MODO
+            // --------------------------------
+
+            if (
+                mode !== undefined &&
+                mode !== "normal" &&
+                mode !== "advanced"
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Modo inválido. Use normal ou advanced."
+                });
+            }
+
+            // --------------------------------
+            // VALIDAR MENSAGEM
+            // --------------------------------
+
+            if (
+                message !== undefined &&
+                typeof message !== "string"
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "A mensagem deve ser um texto."
+                });
+            }
+
+            if (
+                message !== undefined &&
+                message.length > 4000
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "A mensagem não pode ter mais de 4000 caracteres."
+                });
+            }
+
+            // --------------------------------
+            // SALVAR
+            // --------------------------------
+
+            const settings =
+                await updateLeave(
+                    req.params.guildId,
+                    {
+                        enabled,
+                        channelId,
+                        message,
+                        mode
+                    }
+                );
+
+            res.json({
+                success: true,
+
+                message:
+                    "Configuração de mensagem de saída salva.",
+
+                leave: {
+                    enabled:
+                        Boolean(
+                            settings.leave_enabled
+                        ),
+
+                    channelId:
+                        settings.leave_channel_id,
+
+                    message:
+                        settings.leave_message,
+
+                    mode:
+                        settings.leave_mode
+                }
+            });
+
+        } catch (error) {
+            next(error);
+        }
+    }
+);
 
 module.exports = router;

@@ -152,8 +152,61 @@ async function updateAutorole(guildId, settings) {
     return data;
 }
 
+
+// ========================================
+// ATUALIZAR MENSAGEM DE SAÍDA
+// ========================================
+
+async function updateLeave(guildId, settings) {
+    const db = getSupabase();
+
+    const mode =
+        settings.mode === "advanced"
+            ? "advanced"
+            : "normal";
+
+    const update = {
+        guild_id: String(guildId),
+
+        leave_enabled:
+            Boolean(settings.enabled),
+
+        leave_channel_id:
+            settings.channelId
+                ? String(settings.channelId)
+                : null,
+
+        leave_message:
+            settings.message ??
+            "Até mais, {user}! 👋",
+
+        leave_mode:
+            mode,
+
+        updated_at:
+            new Date().toISOString()
+    };
+
+    const { data, error } = await db
+        .from("guild_settings")
+        .upsert(update, {
+            onConflict: "guild_id"
+        })
+        .select("*")
+        .single();
+
+    if (error) {
+        throw new Error(
+            `Erro ao salvar mensagem de saída: ${error.message}`
+        );
+    }
+
+    return data;
+}
+
 module.exports = {
     getGuildSettings,
     updateWelcome,
-    updateAutorole
+    updateAutorole,
+    updateLeave
 };
