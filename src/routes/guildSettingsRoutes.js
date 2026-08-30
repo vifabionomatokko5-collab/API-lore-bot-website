@@ -481,7 +481,9 @@ router.put(
                 enabled,
                 channelId,
                 message,
-                mode
+                mode,
+                advancedTitle,
+                advancedFooter
             } = req.body;
 
             // --------------------------------
