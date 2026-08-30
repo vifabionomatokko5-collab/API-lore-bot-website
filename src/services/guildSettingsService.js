@@ -204,9 +204,29 @@ async function updateLeave(guildId, settings) {
         .single();
 
     if (error) {
-        throw new Error(
+        console.error("========================================");
+        console.error("[LEAVE][SUPABASE] ERRO AO SALVAR");
+        console.error("[LEAVE][SUPABASE] message:", error.message);
+        console.error("[LEAVE][SUPABASE] details:", error.details);
+        console.error("[LEAVE][SUPABASE] hint:", error.hint);
+        console.error("[LEAVE][SUPABASE] code:", error.code);
+        console.error("[LEAVE][SUPABASE] update:", update);
+        console.error("========================================");
+
+        const err = new Error(
             `Erro ao salvar mensagem de saída: ${error.message}`
         );
+
+        err.status = 500;
+        err.data = {
+            success: false,
+            message: `Erro ao salvar mensagem de saída: ${error.message}`,
+            code: error.code || null,
+            details: error.details || null,
+            hint: error.hint || null
+        };
+
+        throw err;
     }
 
     return data;
