@@ -52,9 +52,9 @@ app.get("/api/v1/internal/test-supabase", async (req, res) => {
         }
 
         const { data, error } = await supabase
-            .from("guild_settings")
-            .select("guild_id")
-            .limit(1);
+            .from("guild_resources")
+            .select("guild_id, guild_name, member_count, roles")
+            .limit(10);
 
         if (error) {
             console.error("[SUPABASE] Erro:", error);
@@ -69,7 +69,8 @@ app.get("/api/v1/internal/test-supabase", async (req, res) => {
         return res.json({
             success: true,
             message: "Supabase conectado com sucesso!",
-            records: data.length
+            records: data.length,
+            resources: data
         });
 
     } catch (error) {
