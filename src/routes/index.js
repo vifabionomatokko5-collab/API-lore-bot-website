@@ -62,20 +62,73 @@ router.get("/bot", (req, res) => {
 // SERVIDORES
 // ========================================
 
-router.get("/servers", (req, res) => {
+router.get("/servers", async (req, res) => {
 
-    const bot = req.app.locals.botStatus;
+    try {
 
-    const guilds =
-        Array.isArray(bot?.guilds)
-            ? bot.guilds
-            : [];
+        const bot = req.app.locals.botStatus;
 
-    res.json({
-        success: true,
-        count: guilds.length,
-        servers: guilds
-    });
+        // Primeiro tenta usar os dados atuais do bot.
+        let guilds =
+            Array.isArray(bot?.guilds)
+                ? bot.guilds
+                : [];
+
+        // Se a API reiniciou e o cache estiver vazio,
+        // recupera os servidores salvos no Supabase.
+        if (guilds.length === 0) {
+
+            const { data, error } = await supabase
+                .from("guild_resources")
+                .select(
+                    "guild_id, guild_name, guild_icon, member_count"
+                );
+
+            if (error) {
+                console.error(
+                    "[SUPABASE] Erro ao consultar servidores:",
+                    error.message
+                );
+
+                return res.status(500).json({
+                    success: false,
+                    count: 0,
+                    servers: [],
+                    message:
+                        "Não foi possível consultar os servidores."
+                });
+            }
+
+            guilds = (data || []).map(server => ({
+                id: String(server.guild_id),
+                name: server.guild_name || "Servidor sem nome",
+                icon: server.guild_icon || null,
+                memberCount:
+                    Number(server.member_count) || 0
+            }));
+        }
+
+        res.json({
+            success: true,
+            count: guilds.length,
+            servers: guilds
+        });
+
+    } catch (error) {
+
+        console.error(
+            "[SERVERS] Erro ao consultar servidores:",
+            error.message
+        );
+
+        res.status(500).json({
+            success: false,
+            count: 0,
+            servers: [],
+            message:
+                "Não foi possível carregar os servidores."
+        });
+    }
 
 });
 
