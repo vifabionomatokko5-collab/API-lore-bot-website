@@ -98,7 +98,9 @@ router.put(
                 enabled,
                 channelId,
                 message,
-                mode
+                mode,
+                advancedTitle,
+                advancedFooter
             } = req.body;
 
             // -------------------------------
@@ -447,7 +449,15 @@ router.get(
 
                     mode:
                         settings.leave_mode ||
-                        "normal"
+                        "normal",
+
+                    advancedTitle:
+                        settings.leave_advanced_title ||
+                        "",
+
+                    advancedFooter:
+                        settings.leave_advanced_footer ||
+                        ""
                 }
             });
 
@@ -527,7 +537,9 @@ router.put(
                         enabled,
                         channelId,
                         message,
-                        mode
+                        mode,
+                        advancedTitle,
+                        advancedFooter
                     }
                 );
 
@@ -550,7 +562,15 @@ router.put(
                         settings.leave_message,
 
                     mode:
-                        settings.leave_mode
+                        settings.leave_mode,
+
+                    advancedTitle:
+                        settings.leave_advanced_title ||
+                        "",
+
+                    advancedFooter:
+                        settings.leave_advanced_footer ||
+                        ""
                 }
             });
 

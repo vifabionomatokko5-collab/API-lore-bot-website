@@ -183,6 +183,14 @@ async function updateLeave(guildId, settings) {
         leave_mode:
             mode,
 
+        leave_advanced_title:
+            settings.advancedTitle ??
+            null,
+
+        leave_advanced_footer:
+            settings.advancedFooter ??
+            null,
+
         updated_at:
             new Date().toISOString()
     };
