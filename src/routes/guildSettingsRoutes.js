@@ -155,7 +155,9 @@ router.put(
                     enabled,
                     channelId,
                     message,
-                    mode
+                    mode,
+                    advancedTitle,
+                    advancedFooter
                 }
             );
 
@@ -176,7 +178,13 @@ router.put(
                         settings.welcome_message,
 
                     mode:
-                        settings.welcome_mode
+                        settings.welcome_mode,
+
+                    advancedTitle:
+                        settings.welcome_advanced_title || "",
+
+                    advancedFooter:
+                        settings.welcome_advanced_footer || ""
                 }
             });
 

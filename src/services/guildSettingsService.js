@@ -87,6 +87,12 @@ async function updateWelcome(guildId, settings) {
 
         welcome_mode: mode,
 
+        welcome_advanced_title:
+            settings.advancedTitle ?? "",
+
+        welcome_advanced_footer:
+            settings.advancedFooter ?? "",
+
         updated_at:
             new Date().toISOString()
     };
