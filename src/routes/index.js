@@ -590,10 +590,20 @@ router.use(
  */
 
 const lurasRoutes = require("./lurasRoutes");
+const xpRoutes = require("./xpRoutes");
 
 router.use(
     "/luras",
     lurasRoutes
+);
+
+/* ========================================
+ * SISTEMA DE XP
+ * ======================================== */
+
+router.use(
+    "/xp",
+    xpRoutes
 );
 
 // ========================================
