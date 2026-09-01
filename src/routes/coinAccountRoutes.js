@@ -192,7 +192,7 @@ router.post("/link", async (req, res) => {
                                 ? String(coin_username)
                                 : null,
 
-                        session_encrypted:
+                        encrypted_session:
                             sessionEncrypted,
 
                         updated_at:
