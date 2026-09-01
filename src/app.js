@@ -6,6 +6,7 @@ const cors = require("cors");
 const routes = require("./routes");
 const guildSettingsRoutes = require("./routes/guildSettingsRoutes");
 const premiumRoutes = require("./routes/premiumRoutes");
+const coinAccountRoutes = require("./routes/coinAccountRoutes");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -39,6 +40,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1", routes);
 app.use("/api/v1/guilds", guildSettingsRoutes);
 app.use("/api/v1/premium", premiumRoutes);
+app.use("/api/v1/coin/accounts", coinAccountRoutes);
 
 
 // TEMPORÁRIO — TESTE SUPABASE
